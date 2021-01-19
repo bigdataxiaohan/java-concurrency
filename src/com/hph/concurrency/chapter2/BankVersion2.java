@@ -1,6 +1,5 @@
 package com.hph.concurrency.chapter2;
 
-import javax.swing.plaf.SliderUI;
 
 public class BankVersion2 {
     private final static int MAX = 50;
