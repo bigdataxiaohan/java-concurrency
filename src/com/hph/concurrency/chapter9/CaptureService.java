@@ -47,14 +47,16 @@ public class CaptureService {
                 }
                 CONTROLS.addLast(new Control());
             }
-            Optional.of("The worker +[" + Thread.currentThread().getName() + "] is working").ifPresent(System.out::println);;
+            Optional.of("The worker +[" + Thread.currentThread().getName() + "] is working").ifPresent(System.out::println);
+
             try {
                 Thread.sleep(10_000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
             synchronized (CONTROLS) {
-                Optional.of("The worker +[" + Thread.currentThread().getName() + "] End capture date").ifPresent(System.out::println);;
+                Optional.of("The worker +[" + Thread.currentThread().getName() + "] End capture date").ifPresent(System.out::println);
+                ;
                 CONTROLS.removeFirst();
                 CONTROLS.notifyAll();
 

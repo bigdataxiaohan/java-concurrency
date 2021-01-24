@@ -6,7 +6,7 @@ public class ProducerConsumerVersion1 {
      * 线程之间未进行通讯
      */
     private int i = 1;
-    final private Object LOCK = new Object();
+     private final Object LOCK = new Object();
 
     private void produce() {
 
