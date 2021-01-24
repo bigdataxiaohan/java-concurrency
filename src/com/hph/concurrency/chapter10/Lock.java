@@ -13,7 +13,7 @@ public interface Lock {
 
     void lock() throws InterruptedException;
 
-    void locks(long mills) throws InterruptedException, TimeOutException;
+    void lock(long mills) throws InterruptedException, TimeOutException;
 
     void unlock();
 

@@ -1,6 +1,5 @@
 package com.hph.concurrency.chapter10;
 
-import com.sun.org.apache.xpath.internal.operations.Or;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -14,12 +13,16 @@ public class BooleanLock implements Lock {
     //The initValye is false indicated the lock us free (other thread can get this );
     private boolean initValue;
 
+
+    private Collection<Thread> blockedthreadCollection = new ArrayList<>();
+
+    //判断当前线程
+    private Thread currentThread;
+
+
     public BooleanLock() {
         this.initValue = false;
     }
-
-
-    private Collection<Thread> blockedthreadCollection = new ArrayList<>();
 
     @Override
     public synchronized void lock() throws InterruptedException {
@@ -29,20 +32,37 @@ public class BooleanLock implements Lock {
         }
         blockedthreadCollection.remove(Thread.currentThread());
         this.initValue = true;
+        this.currentThread = Thread.currentThread();
     }
 
     @Override
-    public void locks(long mills) throws InterruptedException, TimeOutException {
+    public synchronized void lock(long mills) throws InterruptedException, TimeOutException {
+        if (mills <= 0)
+            lock();
 
+        long hasRemaining = mills;
+        long endTime = System.currentTimeMillis() + mills;
+        while (initValue) {
+            if (hasRemaining <= 0)
+                throw new TimeOutException("Time out");
+            blockedthreadCollection.add(Thread.currentThread());
+            this.wait(mills);
+            hasRemaining = endTime - System.currentTimeMillis();
+        }
+        //抢到锁
+        this.initValue = true;
+        this.currentThread = Thread.currentThread();
     }
 
     @Override
     public synchronized void unlock() {
 
-        //释放锁
-        this.initValue = false;
-        Optional.of(Thread.currentThread().getName() + " released the lock monitor .").ifPresent(System.out::println);
-        this.notifyAll();
+        if (Thread.currentThread() == currentThread) {
+            //释放锁
+            this.initValue = false;
+            Optional.of(Thread.currentThread().getName() + " released the lock monitor .").ifPresent(System.out::println);
+            this.notifyAll();
+        }
     }
 
     @Override
