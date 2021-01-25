@@ -132,7 +132,7 @@ public class SimpleThreadPool extends Thread {
                 if (TASK_QUEUE.isEmpty() && size > active) {
                     System.out.println("==============Reduce============");
                     //防止在submit的时候 其他的线程去做修改
-                    synchronized (TASK_QUEUE) {
+                    synchronized (THREAD_QUEUE   ) {
                         int releaseSize = size - active;
 
                         for (Iterator<WorkerTask> it = THREAD_QUEUE.iterator(); it.hasNext(); ) {
