@@ -6,6 +6,10 @@ public class ThreadException {
 
     public static void main(String[] args) {
 
+
+        //new Test1().test();
+
+
         Thread t = new Thread(() -> {
             try {
                 Thread.sleep(5_000);
@@ -16,11 +20,14 @@ public class ThreadException {
             }
         });
 
+        t.start();
         //捕获内部线程的异常
-        t.setUncaughtExceptionHandler((thread, e) -> {
+/*        t.setUncaughtExceptionHandler((thread, e) -> {
             System.out.println(e);
             System.out.println(thread);
         });
-        t.start();
+        t.start();*/
+
+
     }
 }
