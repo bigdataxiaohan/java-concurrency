@@ -16,26 +16,50 @@ import java.util.stream.IntStream;
  */
 public class SimpleThreadPool {
     private final int size;
-
-
+    private final int queueSize;
     private final static LinkedList<Runnable> TASK_QUEUE = new LinkedList<>();
 
     private final static List<WorkerTask> THREAD_QUEUE = new ArrayList<>();
     private final static int DEFAULT_SIZE = 10;
+
+    private final static int DEFAULT_TASK_QUEUE_SIZE = 2000;
     //自增
     private static volatile int seq = 0;
 
-    //
+
     private final static String THREAD_PREFIX = "SIMPLE_THREAD_POOL-";
 
     private final static ThreadGroup GROUP = new ThreadGroup("Pool_Group");
 
-    public SimpleThreadPool() {
-        this(DEFAULT_SIZE);
+    private final DiscardPolicy discardPolicy;
+    private final static DiscardPolicy DEFAULT_DISCARD_POLICY = () -> {
+        throw new DiscardException("Discard This Task . ");
+    };
+
+
+    private volatile boolean destroy = false;
+
+    public int getSize() {
+        return size;
     }
 
-    public SimpleThreadPool(int size) {
+    public int getQueueSize() {
+        return queueSize;
+    }
+
+    public boolean destroy() {
+        return this.destroy;
+    }
+
+    public SimpleThreadPool() {
+        this(DEFAULT_SIZE, DEFAULT_TASK_QUEUE_SIZE, DEFAULT_DISCARD_POLICY);
+    }
+
+
+    public SimpleThreadPool(int size, int queueSize, DiscardPolicy discardPolicy) {
         this.size = size;
+        this.queueSize = queueSize;
+        this.discardPolicy = discardPolicy;
         init();
     }
 
@@ -47,8 +71,12 @@ public class SimpleThreadPool {
     }
 
     public void submit(Runnable runnable) {
-        //
+        //对状态进行判断
+        if (destroy)
+            throw new IllegalStateException("The thread pool already destroy and not allow submit task.");
         synchronized (TASK_QUEUE) {
+            if (TASK_QUEUE.size() > queueSize)
+                discardPolicy.discard();
             TASK_QUEUE.addLast(runnable);
             TASK_QUEUE.notifyAll();
         }
@@ -60,10 +88,45 @@ public class SimpleThreadPool {
         THREAD_QUEUE.add(task);
     }
 
+    public void shutdown() throws InterruptedException {
+        while (!TASK_QUEUE.isEmpty()) {
+            Thread.sleep(50);
+        }
+        //判断 当前线程的大小
+        int initVal = THREAD_QUEUE.size();
+        while (initVal > 0) {
+            for (WorkerTask task : THREAD_QUEUE) {
+                if (task.getTaskState() == TaskState.BLOCK) {
+                    //中断 线程退出
+                    task.interrupt();
+                    //关闭
+                    task.close();
+                    initVal--;
+                } else {
+                    Thread.sleep(10);
+                }
+            }
+        }
+        this.destroy = true;
+        System.out.println("The thread poo; disposed .");
+    }
+
     //定义线程状态
     private enum TaskState {
         FREE, RUNNING, BLOCK, DEAD;
     }
+
+    public static class DiscardException extends RuntimeException {
+        public DiscardException(String message) {
+            super(message);
+        }
+    }
+
+    //拒绝策略
+    public interface DiscardPolicy {
+        public void discard() throws DiscardException;
+    }
+
 
     private static class WorkerTask extends Thread {
 
@@ -105,9 +168,11 @@ public class SimpleThreadPool {
         public void close() {
             this.taskState = TaskState.DEAD;
         }
+
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
+      //  SimpleThreadPool threadPool = new SimpleThreadPool(6, 10, SimpleThreadPool.DEFAULT_DISCARD_POLICY);
         SimpleThreadPool threadPool = new SimpleThreadPool();
 
         for (int i = 0; i < 40; i++) {
@@ -120,11 +185,10 @@ public class SimpleThreadPool {
                 }
                 System.out.println("The runnable be serviced by " + Thread.currentThread() + " finished.");
             });
-            System.out.println("============");
         }
-
-
-
+        Thread.sleep(1000);
+        threadPool.shutdown();
+        threadPool.submit(() -> System.out.println("======="));
 /*
         IntStream.rangeClosed(0, 40)
                 .forEach(i -> {
