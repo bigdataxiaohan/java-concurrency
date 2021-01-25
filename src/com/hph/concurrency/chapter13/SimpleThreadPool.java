@@ -1,14 +1,10 @@
 package com.hph.concurrency.chapter13;
 
 
-import com.sun.org.apache.regexp.internal.RE;
-
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.IntStream;
 
 /**
  * 1.任务队列
@@ -132,7 +128,7 @@ public class SimpleThreadPool extends Thread {
                 if (TASK_QUEUE.isEmpty() && size > active) {
                     System.out.println("==============Reduce============");
                     //防止在submit的时候 其他的线程去做修改
-                    synchronized (THREAD_QUEUE   ) {
+                    synchronized (THREAD_QUEUE) {
                         int releaseSize = size - active;
 
                         for (Iterator<WorkerTask> it = THREAD_QUEUE.iterator(); it.hasNext(); ) {
