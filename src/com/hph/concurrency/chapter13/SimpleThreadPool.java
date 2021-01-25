@@ -14,13 +14,12 @@ import java.util.stream.IntStream;
  * 5.max 限制
  * min >=active >=max
  */
-public class SimpleThreadPool {
-    private final int size;
+public class SimpleThreadPool extends Thread {
+    private int size;
     private final int queueSize;
     private final static LinkedList<Runnable> TASK_QUEUE = new LinkedList<>();
 
     private final static List<WorkerTask> THREAD_QUEUE = new ArrayList<>();
-    private final static int DEFAULT_SIZE = 10;
 
     private final static int DEFAULT_TASK_QUEUE_SIZE = 2000;
     //自增
@@ -39,6 +38,10 @@ public class SimpleThreadPool {
 
     private volatile boolean destroy = false;
 
+    private int min;
+    private int max;
+    private int active;
+
     public int getSize() {
         return size;
     }
@@ -47,28 +50,45 @@ public class SimpleThreadPool {
         return queueSize;
     }
 
-    public boolean destroy() {
+    public boolean iSdestroy() {
         return this.destroy;
     }
 
+
+    public void setMin(int min) {
+        this.min = min;
+    }
+
+    public void setMax(int max) {
+        this.max = max;
+    }
+
+    public void setActive(int active) {
+        this.active = active;
+    }
+
     public SimpleThreadPool() {
-        this(DEFAULT_SIZE, DEFAULT_TASK_QUEUE_SIZE, DEFAULT_DISCARD_POLICY);
+        this(4, 8, 12, DEFAULT_TASK_QUEUE_SIZE, DEFAULT_DISCARD_POLICY);
     }
 
 
-    public SimpleThreadPool(int size, int queueSize, DiscardPolicy discardPolicy) {
-        this.size = size;
+    public SimpleThreadPool(int min, int active, int max, int queueSize, DiscardPolicy discardPolicy) {
+        this.min = min;
+        this.active = active;
+        this.max = max;
         this.queueSize = queueSize;
         this.discardPolicy = discardPolicy;
         init();
     }
 
     private void init() {
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < this.min; i++) {
             createWorkTask();
         }
-
+        this.size = min;
+        this.start();
     }
+
 
     public void submit(Runnable runnable) {
         //对状态进行判断
@@ -81,6 +101,20 @@ public class SimpleThreadPool {
             TASK_QUEUE.notifyAll();
         }
     }
+
+    @Override
+    public void run() {
+        while (!destroy) {
+            System.out.printf("Pool#Min:%d,Active:%d,Max:%d,Current:%d,QueueSize:%d\n",
+                    this.min, this.active, this.max, this.size, TASK_QUEUE.size());
+            try {
+                Thread.sleep(5_000);
+            } catch (InterruptedException e) {
+
+            }
+        }
+    }
+
 
     private void createWorkTask() {
         WorkerTask task = new WorkerTask(GROUP, THREAD_PREFIX + (seq++));
@@ -141,7 +175,6 @@ public class SimpleThreadPool {
         }
 
 
-        @Override
         public void run() {
             OUTER:
             while (this.taskState != TaskState.DEAD) {
@@ -172,7 +205,7 @@ public class SimpleThreadPool {
     }
 
     public static void main(String[] args) throws InterruptedException {
-      //  SimpleThreadPool threadPool = new SimpleThreadPool(6, 10, SimpleThreadPool.DEFAULT_DISCARD_POLICY);
+        //  SimpleThreadPool threadPool = new SimpleThreadPool(6, 10, SimpleThreadPool.DEFAULT_DISCARD_POLICY);
         SimpleThreadPool threadPool = new SimpleThreadPool();
 
         for (int i = 0; i < 40; i++) {
@@ -186,9 +219,11 @@ public class SimpleThreadPool {
                 System.out.println("The runnable be serviced by " + Thread.currentThread() + " finished.");
             });
         }
-        Thread.sleep(1000);
+
+
+/*        Thread.sleep(1000);
         threadPool.shutdown();
-        threadPool.submit(() -> System.out.println("======="));
+        threadPool.submit(() -> System.out.println("======="));*/
 /*
         IntStream.rangeClosed(0, 40)
                 .forEach(i -> {
