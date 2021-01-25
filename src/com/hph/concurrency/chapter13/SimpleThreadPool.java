@@ -1,7 +1,11 @@
 package com.hph.concurrency.chapter13;
 
 
+import com.sun.org.apache.regexp.internal.RE;
+
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.IntStream;
@@ -109,8 +113,44 @@ public class SimpleThreadPool extends Thread {
                     this.min, this.active, this.max, this.size, TASK_QUEUE.size());
             try {
                 Thread.sleep(5_000);
-            } catch (InterruptedException e) {
+                //需要扩种
+                if (TASK_QUEUE.size() > active && size < active) {
+                    for (int i = size; i < active; i++) {
+                        createWorkTask();
+                    }
+                    System.out.println("The pool incremented to active.");
+                    //第一次扩容
+                    size = active;
+                } else if (TASK_QUEUE.size() > max && size < max) {
+                    for (int i = size; i < max; i++) {
+                        createWorkTask();
+                    }
+                    System.out.println("The pool incremented to max.");
+                    size = max;
+                }
+                //说明但任务已经完成完了 但是线程还在占据着资源需要释放
+                if (TASK_QUEUE.isEmpty() && size > active) {
+                    System.out.println("==============Reduce============");
+                    //防止在submit的时候 其他的线程去做修改
+                    synchronized (TASK_QUEUE) {
+                        int releaseSize = size - active;
 
+                        for (Iterator<WorkerTask> it = THREAD_QUEUE.iterator(); it.hasNext(); ) {
+                            if (releaseSize <= 0)
+                                break;
+                            WorkerTask task = it.next();
+                            //
+                            task.close();
+                            task.interrupt();
+                            it.remove();
+                            releaseSize--;
+                        }
+                        size = active;
+                    }
+
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -142,7 +182,7 @@ public class SimpleThreadPool extends Thread {
             }
         }
         this.destroy = true;
-        System.out.println("The thread poo; disposed .");
+        System.out.println("The thread pool; disposed.");
     }
 
     //定义线程状态
@@ -185,6 +225,7 @@ public class SimpleThreadPool extends Thread {
                             taskState = TaskState.BLOCK;
                             TASK_QUEUE.wait();
                         } catch (InterruptedException e) {
+                            System.out.println("Closed.");
                             break OUTER;
                         }
                     }
@@ -208,7 +249,7 @@ public class SimpleThreadPool extends Thread {
         //  SimpleThreadPool threadPool = new SimpleThreadPool(6, 10, SimpleThreadPool.DEFAULT_DISCARD_POLICY);
         SimpleThreadPool threadPool = new SimpleThreadPool();
 
-        for (int i = 0; i < 40; i++) {
+        for (int i = 0; i < 140; i++) {
             threadPool.submit(() -> {
                 System.out.println("The runnable  be serviced by " + Thread.currentThread() + " start.");
                 try {
@@ -219,6 +260,8 @@ public class SimpleThreadPool extends Thread {
                 System.out.println("The runnable be serviced by " + Thread.currentThread() + " finished.");
             });
         }
+        Thread.sleep(10000);
+        threadPool.shutdown();
 
 
 /*        Thread.sleep(1000);
