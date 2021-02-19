@@ -1,4 +1,4 @@
-package com.hph.concurrency2;
+package com.hph.concurrency2.chapter1;
 
 /***
  * 推荐使用这种方式

@@ -1,4 +1,4 @@
-package com.hph.concurrency2;
+package com.hph.concurrency2.chapter1;
 
 import java.util.stream.IntStream;
 
@@ -37,6 +37,4 @@ public class SingletonObject7 {
                     }
                 }.start());
     }
-
-    ;
 }
