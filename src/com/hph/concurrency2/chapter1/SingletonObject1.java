@@ -1,4 +1,4 @@
-package com.hph.concurrency2;
+package com.hph.concurrency2.chapter1;
 
 public class SingletonObject1 {
     //单例的设计模式
@@ -18,7 +18,6 @@ public class SingletonObject1 {
     }
 
 
-    //懒汉模式
 
 
 }

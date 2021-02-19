@@ -1,8 +1,6 @@
-package com.hph.concurrency2;
+package com.hph.concurrency2.chapter1;
 
 public class SingletonObject2 {
-
-    //懒汉模式
     private static SingletonObject2 instance;
 
     private SingletonObject2() {

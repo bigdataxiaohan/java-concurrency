@@ -1,20 +1,16 @@
-package com.hph.concurrency2;
+package com.hph.concurrency2.chapter1;
 
-
-/**
- * Double check 版本
- */
 public class SingletonObject4 {
     private static SingletonObject4 instance;
 
     private SingletonObject4() {
 
     }
+    //double check
 
-
-    public static SingletonObject4 getInstance() {
+    private static SingletonObject4 getInstance() {
         if (null == instance) {
-            synchronized (SingletonObject4.class) {
+            synchronized (SingletonObject4.instance) {
                 if (null == instance) {
                     instance = new SingletonObject4();
                 }
