@@ -5,6 +5,7 @@ package com.hph.concurrency2.chapter8;
  * FutureTask ->将你的调用逻辑进行了隔离
  * FutureService ->桥接 Future和 FutureTask
  */
+
 public class SyncInvoker {
     public static void main(String[] args) throws InterruptedException {
 /*
