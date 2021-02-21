@@ -24,6 +24,6 @@ public class AsyncFuture<T> implements Future<T> {
                 this.wait();
             }
         }
-        return null;
+        return (T) "Finshed";
     }
 }
