@@ -1,7 +1,7 @@
 package com.hph.concurrency2.chapter3;
 
 public class VolatileTest2 {
-    private volatile static int INIT_VALUE = 0;
+    private static int INIT_VALUE = 0;
 
     private final static int MAX_LIMIT = 50;
 
@@ -14,18 +14,20 @@ public class VolatileTest2 {
                     Thread.sleep(10);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-                } }
-        }, "READER").start();
+                }
+            }
+        }, "ADDER-1").start();
 
 
         new Thread(() -> {
-
-            int localValue = INIT_VALUE;
             while (INIT_VALUE < MAX_LIMIT) {
-                System.out.printf("Update The value update to [%d]\n", ++localValue);
-                INIT_VALUE = localValue;
-
+                System.out.println("T2->" + (++INIT_VALUE));
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
-        }, "UPDATER").start();
+        }, "ADDER-1").start();
     }
 }
